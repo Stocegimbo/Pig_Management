@@ -81,13 +81,13 @@ brew install podman
 ```
 {
   "canisters": {
-    "day_care": {
+    "pig_management": {
       "type": "custom",
       "main": "src/index.ts",
       "candid": "src/index.did",
       "candid_gen": "http",
-      "build": "npx azle day_care",
-      "wasm": ".azle/day_care/day_care.wasm",
+      "build": "npx azle pig_management",
+      "wasm": ".azle/pig_management/pig_management.wasm",
       "gzip": true,
       "metadata": [
         {
@@ -105,13 +105,13 @@ brew install podman
 
 ```
 
-where `day_care` is the name of the canister.
+where `pig_management` is the name of the canister.
 
 6. Create a `package.json` with the next content and run `npm i`:
 
 ```
 {
-  "name": "day_care",
+  "name": "pig_management",
   "version": "0.1.0",
   "description": "Internet Computer message board application",
   "dependencies": {
@@ -166,7 +166,7 @@ On the other hand, you can interact with the canister using `dfx` via CLI:
 
 - `dfx canister id <CANISTER_NAME>`
   Example:
-- `dfx canister id day_care`
+- `dfx canister id pig_management`
   Response:
 
 ```
@@ -179,8 +179,4 @@ Now, the URL of your canister should like this:
 http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:8000
 ```
 
-With this URL, you can interact with the canister using an HTTP client of your choice. We are going to use `postman`.
-
-To interact with the `day_care` canister using Postman, you need to perform HTTP requests to the canister's URL.
-
-To interact with the `day_care` canister, refer to the [day_care canister Postman documentation](https://documenter.getpostman.com/view/31819605/2sA3JRaf7z).
+With this URL, you can interact with the canister using an HTTP client of your choice. 
