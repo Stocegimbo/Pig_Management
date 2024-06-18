@@ -1,4 +1,3 @@
-// Import necessary libraries
 import { v4 as uuidv4 } from "uuid";
 import { Server, StableBTreeMap, Principal } from "azle";
 import express from "express";
@@ -103,38 +102,96 @@ const healthRecordsStorage = StableBTreeMap<string, HealthRecord>(2);
 const inventoryStorage = StableBTreeMap<string, Inventory>(3);
 const invoicesStorage = StableBTreeMap<string, Invoice>(4);
 
+// Validation functions
+const validatePig = (req, res, next) => {
+  const { name, breed, birthDate, weight, healthStatus } = req.body;
+  if (
+    !name || typeof name !== "string" ||
+    !breed || typeof breed !== "string" ||
+    !birthDate || isNaN(Date.parse(birthDate)) ||
+    !weight || typeof weight !== "number" ||
+    !healthStatus || typeof healthStatus !== "string"
+  ) {
+    res.status(400).json({
+      error: "Invalid input: Ensure 'name', 'breed', 'birthDate', 'weight', and 'healthStatus' are provided and are of the correct types.",
+    });
+    return;
+  }
+  next();
+};
+
+const validateFeed = (req, res, next) => {
+  const { pigId, feedType, quantity, date } = req.body;
+  if (
+    !pigId || typeof pigId !== "string" ||
+    !feedType || typeof feedType !== "string" ||
+    !quantity || typeof quantity !== "number" ||
+    !date || isNaN(Date.parse(date))
+  ) {
+    res.status(400).json({
+      error: "Invalid input: Ensure 'pigId', 'feedType', 'quantity', and 'date' are provided and are of the correct types.",
+    });
+    return;
+  }
+  next();
+};
+
+const validateHealthRecord = (req, res, next) => {
+  const { pigId, description, date, veterinarian } = req.body;
+  if (
+    !pigId || typeof pigId !== "string" ||
+    !description || typeof description !== "string" ||
+    !date || isNaN(Date.parse(date)) ||
+    !veterinarian || typeof veterinarian !== "string"
+  ) {
+    res.status(400).json({
+      error: "Invalid input: Ensure 'pigId', 'description', 'date', and 'veterinarian' are provided and are of the correct types.",
+    });
+    return;
+  }
+  next();
+};
+
+const validateInventory = (req, res, next) => {
+  const { itemName, quantity, cost } = req.body;
+  if (
+    !itemName || typeof itemName !== "string" ||
+    !quantity || typeof quantity !== "number" ||
+    !cost || typeof cost !== "number"
+  ) {
+    res.status(400).json({
+      error: "Invalid input: Ensure 'itemName', 'quantity', and 'cost' are provided and are of the correct types.",
+    });
+    return;
+  }
+  next();
+};
+
+const validateInvoice = (req, res, next) => {
+  const { customerId, amount, date } = req.body;
+  if (
+    !customerId || typeof customerId !== "string" ||
+    !amount || typeof amount !== "number" ||
+    !date || isNaN(Date.parse(date))
+  ) {
+    res.status(400).json({
+      error: "Invalid input: Ensure 'customerId', 'amount', and 'date' are provided and are of the correct types.",
+    });
+    return;
+  }
+  next();
+};
+
 // Define the express server
 export default Server(() => {
   const app = express();
   app.use(express.json());
 
   // Endpoint for creating a new pig
-  app.post("/pigs", (req, res) => {
-    if (
-      !req.body.name ||
-      typeof req.body.name !== "string" ||
-      !req.body.breed ||
-      typeof req.body.breed !== "string" ||
-      !req.body.birthDate ||
-      !req.body.weight ||
-      typeof req.body.weight !== "number" ||
-      !req.body.healthStatus ||
-      typeof req.body.healthStatus !== "string"
-    ) {
-      res.status(400).json({
-        error: "Invalid input: Ensure 'name', 'breed', 'birthDate', 'weight', and 'healthStatus' are provided and are of the correct types.",
-      });
-      return;
-    }
-
+  app.post("/pigs", validatePig, (req, res) => {
     try {
-      const pig = new Pig(
-        req.body.name,
-        req.body.breed,
-        new Date(req.body.birthDate),
-        req.body.weight,
-        req.body.healthStatus
-      );
+      const { name, breed, birthDate, weight, healthStatus } = req.body;
+      const pig = new Pig(name, breed, new Date(birthDate), weight, healthStatus);
       pigsStorage.insert(pig.id, pig);
       res.status(201).json({
         message: "Pig created successfully",
@@ -165,29 +222,10 @@ export default Server(() => {
   });
 
   // Endpoint for creating a new feed record
-  app.post("/feeds", (req, res) => {
-    if (
-      !req.body.pigId ||
-      typeof req.body.pigId !== "string" ||
-      !req.body.feedType ||
-      typeof req.body.feedType !== "string" ||
-      !req.body.quantity ||
-      typeof req.body.quantity !== "number" ||
-      !req.body.date
-    ) {
-      res.status(400).json({
-        error: "Invalid input: Ensure 'pigId', 'feedType', 'quantity', and 'date' are provided and are of the correct types.",
-      });
-      return;
-    }
-
+  app.post("/feeds", validateFeed, (req, res) => {
     try {
-      const feed = new Feed(
-        req.body.pigId,
-        req.body.feedType,
-        req.body.quantity,
-        new Date(req.body.date)
-      );
+      const { pigId, feedType, quantity, date } = req.body;
+      const feed = new Feed(pigId, feedType, quantity, new Date(date));
       feedsStorage.insert(feed.id, feed);
       res.status(201).json({
         message: "Feed record created successfully",
@@ -218,29 +256,10 @@ export default Server(() => {
   });
 
   // Endpoint for creating a new health record
-  app.post("/healthRecords", (req, res) => {
-    if (
-      !req.body.pigId ||
-      typeof req.body.pigId !== "string" ||
-      !req.body.description ||
-      typeof req.body.description !== "string" ||
-      !req.body.date ||
-      !req.body.veterinarian ||
-      typeof req.body.veterinarian !== "string"
-    ) {
-      res.status(400).json({
-        error: "Invalid input: Ensure 'pigId', 'description', 'date', and 'veterinarian' are provided and are of the correct types.",
-      });
-      return;
-    }
-
+  app.post("/healthRecords", validateHealthRecord, (req, res) => {
     try {
-      const healthRecord = new HealthRecord(
-        req.body.pigId,
-        req.body.description,
-        new Date(req.body.date),
-        req.body.veterinarian
-      );
+      const { pigId, description, date, veterinarian } = req.body;
+      const healthRecord = new HealthRecord(pigId, description, new Date(date), veterinarian);
       healthRecordsStorage.insert(healthRecord.id, healthRecord);
       res.status(201).json({
         message: "Health record created successfully",
@@ -271,27 +290,10 @@ export default Server(() => {
   });
 
   // Endpoint for creating a new inventory item
-  app.post("/inventory", (req, res) => {
-    if (
-      !req.body.itemName ||
-      typeof req.body.itemName !== "string" ||
-      !req.body.quantity ||
-      typeof req.body.quantity !== "number" ||
-      !req.body.cost ||
-      typeof req.body.cost !== "number"
-    ) {
-      res.status(400).json({
-        error: "Invalid input: Ensure 'itemName', 'quantity', and 'cost' are provided and are of the correct types.",
-      });
-      return;
-    }
-
+  app.post("/inventory", validateInventory, (req, res) => {
     try {
-      const inventory = new Inventory(
-        req.body.itemName,
-        req.body.quantity,
-        req.body.cost
-      );
+      const { itemName, quantity, cost } = req.body;
+      const inventory = new Inventory(itemName, quantity, cost);
       inventoryStorage.insert(inventory.id, inventory);
       res.status(201).json({
         message: "Inventory item created successfully",
@@ -322,26 +324,10 @@ export default Server(() => {
   });
 
   // Endpoint for creating a new invoice
-  app.post("/invoices", (req, res) => {
-    if (
-      !req.body.customerId ||
-      typeof req.body.customerId !== "string" ||
-      !req.body.amount ||
-      typeof req.body.amount !== "number" ||
-      !req.body.date
-    ) {
-      res.status(400).json({
-        error: "Invalid input: Ensure 'customerId', 'amount', and 'date' are provided and are of the correct types.",
-      });
-      return;
-    }
-
+  app.post("/invoices", validateInvoice, (req, res) => {
     try {
-      const invoice = new Invoice(
-        req.body.customerId,
-        req.body.amount,
-        new Date(req.body.date)
-      );
+      const { customerId, amount, date } = req.body;
+      const invoice = new Invoice(customerId, amount, new Date(date));
       invoicesStorage.insert(invoice.id, invoice);
       res.status(201).json({
         message: "Invoice created successfully",
