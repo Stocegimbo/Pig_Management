@@ -1,7 +1,3 @@
-# Pig Management System
-
-The Pig Management System is a comprehensive solution tailored for pig farms, aiming to optimize their operations. It offers efficient management of pigs, feeds, health records, inventory, and billing, streamlining pig farm management processes.
-
 ## Getting started
 
 To get started developing in the browser, click this button:
@@ -14,7 +10,7 @@ If you rather want to use GitHub Codespaces, click this button instead:
 
 **NOTE**: After `dfx deploy`, when developing in GitHub Codespaces, run `./canister_urls.py` and click the links that are shown there.
 
-If you prefer running VS Code locally and not in the browser, click "Codespaces: ..." or "Gitpod" in the bottom left corner and select "Open in VS Code" in the menu that appears.
+If you prefer running VS Code locally and not in the browser, click "Codespaces: ..." or "Gitpod" in the bottom left corner and select "Open in VS Code" in the menu that appears. 
 If prompted, proceed by installing the recommended plugins for VS Code.
 
 To develop fully locally, first install [Docker](https://www.docker.com/get-started/) and [VS Code](https://code.visualstudio.com/) and start them on your machine.
@@ -25,43 +21,33 @@ Next, click the following button to open the dev container locally:
 ## Prerequisities
 
 1. Install `nvm`:
-
 - `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash`
 
 2. Switch to node v20:
-
 - `nvm install 20`
 - `nvm use 20`
 
 3. Install build dependencies:
-
 ## For Ubuntu and WSL2
-
 ```
 sudo apt-get install podman
 ```
-
 ## For macOS:
-
 ```
 xcode-select --install
 brew install podman
 ```
 
 4. Install `dfx`
-
 - `DFX_VERSION=0.16.1 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"`
 
 5. Add `dfx` to PATH:
-
 - `echo 'export PATH="$PATH:$HOME/bin"' >> "$HOME/.bashrc"`
 
 6. Create a project structure:
-
 - create `src` dir
 - create `index.ts` in the `src` dir
 - create `tsconfig.json` in the root directory with the next content
-
 ```
 {
     "compilerOptions": {
@@ -75,19 +61,17 @@ brew install podman
     }
 }
 ```
-
 - create `dfx.json` with the next content
-
 ```
 {
   "canisters": {
-    "pig_management": {
+    "message_board": {
       "type": "custom",
       "main": "src/index.ts",
       "candid": "src/index.did",
       "candid_gen": "http",
-      "build": "npx azle pig_management",
-      "wasm": ".azle/pig_management/pig_management.wasm",
+      "build": "npx azle message_board",
+      "wasm": ".azle/message_board/message_board.wasm",
       "gzip": true,
       "metadata": [
         {
@@ -102,16 +86,13 @@ brew install podman
     }
   }
 }
-
 ```
-
-where `pig_management` is the name of the canister.
+where `message_board` is the name of the canister. 
 
 6. Create a `package.json` with the next content and run `npm i`:
-
 ```
 {
-  "name": "pig_management",
+  "name": "message_board",
   "version": "0.1.0",
   "description": "Internet Computer message board application",
   "dependencies": {
@@ -132,26 +113,20 @@ where `pig_management` is the name of the canister.
 ```
 
 7. Run a local replica
-
 - `dfx start --host 127.0.0.1:8000`
 
-#### IMPORTANT NOTE
-
+#### IMPORTANT NOTE 
 If you make any changes to the `StableBTreeMap` structure like change datatypes for keys or values, changing size of the key or value, you need to restart `dfx` with the `--clean` flag. `StableBTreeMap` is immutable and any changes to it's configuration after it's been initialized are not supported.
-
 - `dfx start --host 127.0.0.1:8000 --clean`
 
 8. Deploy a canister
-
 - `dfx deploy`
-  Also, if you are building an HTTP-based canister and would like your canister to autoreload on file changes (DO NOT deploy to mainnet with autoreload enabled):
-
+Also, if you are building an HTTP-based canister and would like your canister to autoreload on file changes (DO NOT deploy to mainnet with autoreload enabled):
 ```
 AZLE_AUTORELOAD=true dfx deploy
 ```
 
 9. Stop a local replica
-
 - `dfx stop`
 
 ## Interaction with the canister
@@ -163,20 +138,98 @@ Candid interface provides a simple UI where you can interact with functions in t
 On the other hand, you can interact with the canister using `dfx` via CLI:
 
 ### get canister id:
-
 - `dfx canister id <CANISTER_NAME>`
-  Example:
-- `dfx canister id pig_management`
-  Response:
-
+Example:
+- `dfx canister id message_board`
+Response:
 ```
 bkyz2-fmaaa-aaaaa-qaaaq-cai
 ```
 
 Now, the URL of your canister should like this:
-
 ```
 http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:8000
 ```
 
-With this URL, you can interact with the canister using an HTTP client of your choice. 
+With this URL, you can interact with the canister using an HTTP client of your choice. We are going to use `curl`.
+
+### create a message:
+- `curl -X POST <CANISTER_URL>/<REQUEST_PATH> -H "Content-type: application/json" -d <PAYLOAD>`
+Example: 
+- `curl -X POST http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:8000/messages -H "Content-type: application/json" -d '{"title": "todo list", "body": "some important things", "attachmentURL": "url/path/to/some/photo/attachment"}'`
+Response:
+```
+{
+    "id": "d8326ec8-fe70-402e-8914-ca83f0f1055b",
+    "createdAt": "2024-02-09T11:24:32.441Z",
+    "title": "todo list",
+    "body": "some important things",
+    "attachmentURL": "url/path/to/some/photo/attachment"
+}
+```
+
+### update a message:
+- `curl -X PUT <CANISTER_URL>/<REQUEST_PATH>/<MESSAGE_ID> -H "Content-type: application/json" -d <PAYLOAD>`
+Example (In this case we include a message id in the payload to identify the message we want to update): 
+- `curl -X PUT  http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:8000/messages/d8326ec8-fe70-402e-8914-ca83f0f1055b -H "Content-type: application/json" -d '{"title": "UPDATED TITLE", "body": "some important things", "attachmentURL": "url/path/to/some/photo/attachment"}'`
+Response:
+```
+{
+    "id": "d8326ec8-fe70-402e-8914-ca83f0f1055b",
+    "createdAt": "2024-02-09T11:24:32.441Z",
+    "title": "UPDATED TITLE",
+    "body": "some important things",
+    "attachmentURL": "url/path/to/some/photo/attachment",
+    "updatedAt": "2024-02-09T11:26:59.002Z"
+}
+```
+
+### get all messages:
+- `curl <CANISTER_URL>/<REQUEST_PATH>`
+Example:
+- `curl http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:8000/messages`
+Response:
+```
+[
+    {
+        "id": "d8326ec8-fe70-402e-8914-ca83f0f1055b",
+        "createdAt": "2024-02-09T11:24:32.441Z",
+        "title": "UPDATED TITLE",
+        "body": "some important things",
+        "attachmentURL": "url/path/to/some/photo/attachment",
+        "updatedAt": "2024-02-09T11:26:59.002Z"
+    }
+]
+```
+
+### get a message:
+- `curl <CANISTER_URL>/<REQUEST_PATH>/<MESSAGE_ID>`
+Example (here we only provide a message id):
+- `curl http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:8000/messages/d8326ec8-fe70-402e-8914-ca83f0f1055b`
+Response:
+```
+{
+    "id": "d8326ec8-fe70-402e-8914-ca83f0f1055b",
+    "createdAt": "2024-02-09T11:24:32.441Z",
+    "title": "UPDATED TITLE",
+    "body": "some important things",
+    "attachmentURL": "url/path/to/some/photo/attachment",
+    "updatedAt": "2024-02-09T11:26:59.002Z"
+}
+```
+
+### delete a message:
+- `curl -X DELETE <CANISTER_URL>/<REQUEST_PATH>/<MESSAGE_ID>`
+Example (here we only provide a message id):
+- `curl -X DELETE http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:8000/messages/d8326ec8-fe70-402e-8914-ca83f0f1055b`
+Response (returns the deleted message):
+```
+{
+    "id": "d8326ec8-fe70-402e-8914-ca83f0f1055b",
+    "createdAt": "2024-02-09T11:24:32.441Z",
+    "title": "UPDATED TITLE",
+    "body": "some important things",
+    "attachmentURL": "url/path/to/some/photo/attachment",
+    "updatedAt": "2024-02-09T11:26:59.002Z"
+}
+```
